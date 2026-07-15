@@ -228,7 +228,9 @@ h1 { font-size: clamp(2rem, 5vw, 2.8rem); color: var(--green-deep); margin-botto
     <div class="stats-summary" id="stats-summary"></div>
     <table class="stats-table" id="stats-table"><thead></thead><tbody></tbody></table>
   </div>
-  <div class="btn-row">
+  <div class="btn-row" style="gap: 8px; flex-wrap: wrap;">
+    <button class="btn btn-secondary" onclick="exportStats()">💾 Export</button>
+    <label class="btn btn-secondary" style="cursor:pointer;">📂 Import<input type="file" accept=".json" onchange="importStats(event)" style="display:none;"></label>
     <button class="btn btn-secondary" onclick="showScreen('hub')">Back to Menu</button>
   </div>
 </div>
@@ -524,6 +526,36 @@ function renderStats() {
 function fmtDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+function exportStats() {
+  const data = localStorage.getItem('btm-stats') || '{}';
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'between-meetings-stats.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importStats(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.math || data.memory || data.snake) {
+        localStorage.setItem('btm-stats', JSON.stringify(data));
+        renderStats();
+        alert('Stats imported!');
+      } else {
+        alert('Invalid stats file.');
+      }
+    } catch { alert('Could not read file.'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 // ─── MATH ─────────────────────────────────────────────
